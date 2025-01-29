@@ -9,10 +9,12 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useNavigate } from "react-router-dom";
 
 const ClientDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const navigate = useNavigate();
 
   const getTomorrowDate = () => {
     const tomorrow = new Date();
@@ -21,11 +23,11 @@ const ClientDashboard = () => {
   };
 
   const {
-    employees,
+    employees = [],
     fetchEmployees,
     assignWork,
     isAssigning,
-    assignments,
+    assignments = [],
     fetchEmployeeAssignments,
     updateAssignmentStatus,
   } = useAuthStore();
@@ -52,13 +54,11 @@ const ClientDashboard = () => {
     };
 
     initializeDashboard();
-  }, []);
+  }, [fetchEmployees, fetchEmployeeAssignments]);
 
   /*** Pie Chart Data Preparation ***/
   const prepareEmployeeCompletionData = () => {
-    const totalPresent = assignments.filter(
-      (a) => a.title === "Present"
-    ).length;
+    const totalPresent = assignments.filter((a) => a.title === "Present").length;
     const totalAbsent = assignments.filter((a) => a.title === "Absent").length;
 
     return [
@@ -104,15 +104,13 @@ const ClientDashboard = () => {
     <div className="p-6 bg-base-100 h-full overflow-y-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Mentor Dashboard</h2>
-        <button onClick={() => setShowModal(true)} className="btn btn-primary">
+        <button onClick={() => navigate('/client-attendance')} className="btn btn-primary">
           <Plus /> Mark Attendance
         </button>
       </div>
 
       <div className="mt-6">
-        <h3 className="text-xl font-semibold mb-4">
-          Attendance Status Overview
-        </h3>
+        <h3 className="text-xl font-semibold mb-4">Attendance Status Overview</h3>
         <div className="overflow-x-auto">
           <table className="table w-full">
             <thead>
@@ -126,34 +124,18 @@ const ClientDashboard = () => {
             </thead>
             <tbody>
               {employees.map((emp) => {
-                const empAssignments = assignments.filter(
-                  (a) => a.assignedTo === emp._id
-                );
-                const presentCount = empAssignments.filter(
-                  (a) => a.title === "Present"
-                ).length;
+                const empAssignments = assignments.filter((a) => a.assignedTo === emp._id);
+                const presentCount = empAssignments.filter((a) => a.title === "Present").length;
                 const total = empAssignments.length;
                 const absentCount = total - presentCount;
 
                 return (
-                  <tr key={emp.name}>
+                  <tr key={emp._id}>
                     <td>{emp.fullName}</td>
                     <td>{total}</td>
-                    <td>
-                      <span className="badge badge-error">{absentCount}</span>
-                    </td>
-                    <td>
-                      <span className="badge badge-success">
-                        {presentCount}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="badge badge-primary">
-                        {total > 0
-                          ? `${Math.round((presentCount / total) * 100)}%`
-                          : "0%"}
-                      </span>
-                    </td>
+                    <td><span className="badge badge-error">{absentCount}</span></td>
+                    <td><span className="badge badge-success">{presentCount}</span></td>
+                    <td><span className="badge badge-primary">{total > 0 ? `${Math.round((presentCount / total) * 100)}%` : "0%"}</span></td>
                   </tr>
                 );
               })}
@@ -190,9 +172,7 @@ const ClientDashboard = () => {
                 {assignments.map((assignment) => (
                   <tr key={assignment._id}>
                     <td>{assignment.title}</td>
-                    <td>
-                      {new Date(assignment.deadline).toLocaleDateString()}
-                    </td>
+                    <td>{new Date(assignment.deadline).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -200,139 +180,25 @@ const ClientDashboard = () => {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 ml-4">
-          <div>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={prepareEmployeeCompletionData()}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#FFFFFF"
-                  dataKey="value"
-                >
-                  {prepareEmployeeCompletionData().map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+        <div>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={prepareEmployeeCompletionData()}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                dataKey="value"
+              >
+                {prepareEmployeeCompletionData().map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
-
-        {showModal && (
-          <div className="modal modal-open">
-            <div className="modal-box">
-              <h3 className="font-bold text-lg mb-4">Mark Attendance</h3>
-              <form onSubmit={handleSubmit}>
-                <div className="form-control w-full">
-                  <label className="label">Student Name</label>
-                  <select
-                    className="select select-bordered w-full"
-                    value={newAssignment.employeeName}
-                    onChange={(e) =>
-                      setNewAssignment({
-                        ...newAssignment,
-                        employeeName: e.target.value,
-                      })
-                    }
-                    required
-                  >
-                    <option disabled value="">
-                      Select student
-                    </option>
-                    {employees?.map((emp) => (
-                      <option key={emp._id} value={emp.fullName}>
-                        {emp.fullName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-control w-full">
-                  <label className="label">Attendance</label>
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        value="Present"
-                        className="radio"
-                        checked={newAssignment.title === "Present"}
-                        onChange={(e) =>
-                          setNewAssignment({
-                            ...newAssignment,
-                            title: e.target.value,
-                          })
-                        }
-                        required
-                      />
-                      <span>Present</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        value="Absent"
-                        className="radio"
-                        checked={newAssignment.title === "Absent"}
-                        onChange={(e) =>
-                          setNewAssignment({
-                            ...newAssignment,
-                            title: e.target.value,
-                          })
-                        }
-                        required
-                      />
-                      <span>Absent</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="form-control w-full">
-                  <label className="label">Deadline</label>
-                  <input
-                    type="date"
-                    className="input input-bordered w-full"
-                    value={newAssignment.deadline}
-                    min={getTomorrowDate()}
-                    onChange={(e) =>
-                      setNewAssignment({
-                        ...newAssignment,
-                        deadline: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
-                <div className="modal-action">
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={isAssigning}
-                  >
-                    {isAssigning ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      "Submit"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

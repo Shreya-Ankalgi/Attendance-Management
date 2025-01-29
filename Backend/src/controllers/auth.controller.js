@@ -211,6 +211,8 @@ export const updateAssignmentStatus = async (req, res) => {
 export const fetchEmployees = async (req, res) => {
   try {
     const employees = await User.find({ role: 'student' }).select('_id fullName email');
+    console.log(employees);
+    
     res.status(200).json(employees);
   } catch (error) {
     console.error('Error fetching employees:', error);
