@@ -27,8 +27,8 @@ const userSchema = new mongoose.Schema(
     },
     QrCode: {
       type: String,
-      required: true
-    }
+    },
+    Attended:{type:Number},    
   },
   { timestamps: true }
 );
