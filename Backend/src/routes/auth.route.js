@@ -1,5 +1,5 @@
 import express from 'express' ;
-import { assignWork, checkAuth, fetchEmployeeAssignments, fetchEmployees, login, logout, markAttendance, signup, updateAssignmentStatus,  } from '../controllers/auth.controller.js';
+import { assignWork, checkAuth, fetchEmployeeAssignments, fetchEmployees, login, logout, markAttendance, signup, updateAssignmentStatus, getAllClassesData } from '../controllers/auth.controller.js';
 import { protectRoute } from '../middlewares/auth.middleware.js';
 
 const router = express.Router() ;
@@ -14,6 +14,7 @@ router.patch('/assignments/:assignmentId/status', protectRoute, updateAssignment
 
 
 router.get("/check",protectRoute, checkAuth)
+router.get("/getAllClasses",protectRoute, getAllClassesData)
 router.post("/markattendance",protectRoute, markAttendance)
 
 export default router ;

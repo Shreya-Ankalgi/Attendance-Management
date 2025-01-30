@@ -28,11 +28,11 @@ const userSchema = new mongoose.Schema(
     QrCode: {
       type: String,
     },
-    Attended:{type:Number},    
+    Attended:{type:Number},   //students 
    
-    NoOfClassesTaken: {
+    NoOfClassesTaken: {  
       type:Number,
-      default:0
+      default:0 
     },
   },
   { timestamps: true }
