@@ -210,9 +210,8 @@ export const updateAssignmentStatus = async (req, res) => {
 // Corresponding controller method (in auth controller)
 export const fetchEmployees = async (req, res) => {
   try {
-    const employees = await User.find({ role: 'student' }).select('_id fullName email');
+    const employees = await User.find({ role: 'student' }).select('-password');
     console.log(employees);
-    
     res.status(200).json(employees);
   } catch (error) {
     console.error('Error fetching employees:', error);
@@ -222,7 +221,10 @@ export const fetchEmployees = async (req, res) => {
 export const markAttendance = async (req, res) => {
   try {
     console.log("Received students:", req.body);
-    const students_present = req.body;
+    const students_present = req.body.presentStudents;
+    let subject=req.body.subjectSelected;
+
+
     let adminId=req.user._id;
     let admin=await User.findById(adminId);
     console.log('Admin');
@@ -247,7 +249,7 @@ export const markAttendance = async (req, res) => {
 
     // Create new class record
     const newClass = await Class.create({
-      subjectName: 'Abc',
+      subjectName: subject,
       totalPresent,
       date: Date.now(),
       students_present
@@ -283,3 +285,17 @@ export const markAttendance = async (req, res) => {
     });
   }
 };
+
+export const getAllClassesData=async (req,res) => { 
+  try {
+    const allClases = await Class.find({});    
+    console.log(allClases);
+    
+    res.status(200).json(allClases);
+  } catch (error) {
+    console.error('Error fetching classes:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+
+};
+
