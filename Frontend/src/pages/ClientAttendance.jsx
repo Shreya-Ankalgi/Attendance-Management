@@ -4,7 +4,8 @@ import { useAuthStore } from "../store/useAuthStore";
 import toast from "react-hot-toast";
 import { Check, X } from "lucide-react";
 
-const TOAST_DURATION = 3000;
+const TOAST_DURATION = 1000;
+const SCAN_COOLDOWN = 500; // Cooldown period between scans
 
 const ClientAttendance = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,7 +14,7 @@ const ClientAttendance = () => {
     const [lastScanned, setLastScanned] = useState(null);
     const [showFeedback, setShowFeedback] = useState(false);
     const [canScan, setCanScan] = useState(true);
-    const { employees, fetchEmployees } = useAuthStore();
+    const { employees, fetchEmployees, markAttendance } = useAuthStore();
 
     const getUsers = async () => {
         await fetchEmployees();
@@ -39,31 +40,40 @@ const ClientAttendance = () => {
             },
         });
 
+        // Re-enable scanning after the cooldown period
         setTimeout(() => {
             setCanScan(true);
-        }, TOAST_DURATION);
+        }, SCAN_COOLDOWN);
     };
 
     const handleScan = (data) => {
         if (!data?.text || !canScan) return;
-
         const studentId = data.text;
+        console.log(studentId);
+        
         const student = students.find((s) => s._id === studentId);
 
-        if (student && !presentStudents.includes(studentId)) {
-            setPresentStudents((prev) => [...prev, studentId]);
-            setLastScanned(student);
-            setShowFeedback(true);
-            showToastAndDisableScan(`${student.fullName} marked present`);
-        } else if (presentStudents.includes(studentId)) {
+        if (!student) return; // Exit if no student found
+
+        if (presentStudents.includes(studentId)) {
             showToastAndDisableScan("Student already marked present", false);
+            return;
         }
+
+        // Mark student as present
+        setPresentStudents((prev) => [...prev, studentId]);
+        setLastScanned(student);
+        setShowFeedback(true);
+
+        showToastAndDisableScan(`${student.fullName} marked present`, true);
     };
+
+    // Rest of the component remains the same...
 
     const handleEndClass = () => {
         const presentCount = presentStudents.length;
         const totalCount = students.length;
-
+        markAttendance(presentStudents);
         showToastAndDisableScan(`Class ended. ${presentCount}/${totalCount} students present`);
         setPresentStudents([]);
         setIsModalOpen(false);
@@ -88,7 +98,7 @@ const ClientAttendance = () => {
                 </div>
             </div>
             <div className="flex">
-            <input type="text" className="py-1 px-2 mb-3 outline-none " placeholder="Enter subject name" />
+                <input type="text" className="py-1 px-2 mb-3 outline-none " placeholder="Enter subject name" />
 
             </div>
 
@@ -101,18 +111,16 @@ const ClientAttendance = () => {
                 {students?.map((student) => (
                     <div
                         key={student._id}
-                        className={`flex justify-between items-center p-3 border rounded-lg mb-2 transition-all duration-300 ${
-                            presentStudents.includes(student._id)
-                                ? "border-green-500 bg-green-500/10"
-                                : "border-red-500"
-                        }`}
+                        className={`flex justify-between items-center p-3 border rounded-lg mb-2 transition-all duration-300 ${presentStudents.includes(student._id)
+                            ? "border-green-500 bg-green-500/10"
+                            : "border-red-500"
+                            }`}
                     >
                         <span className="text-md font-medium">{student.fullName}</span>
                         <div className="flex items-center gap-2">
                             <span
-                                className={`text-sm font-bold ${
-                                    presentStudents.includes(student._id) ? "text-green-500" : "text-red-500"
-                                }`}
+                                className={`text-sm font-bold ${presentStudents.includes(student._id) ? "text-green-500" : "text-red-500"
+                                    }`}
                             >
                                 {presentStudents.includes(student._id) ? "Present" : "Absent"}
                             </span>

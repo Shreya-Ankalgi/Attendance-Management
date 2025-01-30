@@ -10,6 +10,7 @@ import {
   Legend,
 } from "recharts";
 import { useNavigate } from "react-router-dom";
+import { checkAuth } from "../../../Backend/src/controllers/auth.controller.js";
 
 const ClientDashboard = () => {
   const [showModal, setShowModal] = useState(false);
@@ -22,6 +23,8 @@ const ClientDashboard = () => {
     return tomorrow.toISOString().split("T")[0];
   };
 
+  const [user, setUser] = useState()
+
   const {
     employees = [],
     fetchEmployees,
@@ -30,6 +33,7 @@ const ClientDashboard = () => {
     assignments = [],
     fetchEmployeeAssignments,
     updateAssignmentStatus,
+    authUser
   } = useAuthStore();
 
   const [newAssignment, setNewAssignment] = useState({
@@ -41,6 +45,10 @@ const ClientDashboard = () => {
 
   useEffect(() => {
     const initializeDashboard = async () => {
+      // checkAuth()
+      setUser(authUser)
+      console.log(authUser);
+      
       try {
         const fetchedEmployees = await fetchEmployees();
         if (fetchedEmployees?.length > 0) {
@@ -126,7 +134,7 @@ const ClientDashboard = () => {
               {employees.map((emp) => {
                 const empAssignments = assignments.filter((a) => a.assignedTo === emp._id);
                 const presentCount = empAssignments.filter((a) => a.title === "Present").length;
-                const total = empAssignments.length;
+                const total = user?.NoOfClassesTaken;
                 const absentCount = total - presentCount;
 
                 return (
@@ -144,7 +152,7 @@ const ClientDashboard = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mt-4">
+      {/* <div className="grid md:grid-cols-2 gap-6 mt-4">
         <div>
           <h3 className="text-xl font-semibold mb-4">
             Select Student
@@ -199,7 +207,7 @@ const ClientDashboard = () => {
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

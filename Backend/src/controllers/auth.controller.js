@@ -3,7 +3,7 @@ import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import Assign from "../models/assign.model.js"
 import bcrypt from "bcryptjs";
-
+import Class from "../models/class.model.js"
 
 
 export const signup = async (req, res) => {
@@ -217,5 +217,69 @@ export const fetchEmployees = async (req, res) => {
   } catch (error) {
     console.error('Error fetching employees:', error);
     res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+export const markAttendance = async (req, res) => {
+  try {
+    console.log("Received students:", req.body);
+    const students_present = req.body;
+    let adminId=req.user._id;
+    let admin=await User.findById(adminId);
+    console.log('Admin');
+    
+    admin.NoOfClassesTaken=(typeof admin.NoOfClassesTaken === 'number' ? admin.NoOfClassesTaken : 0) + 1;
+    await admin.save();
+
+    const totalPresent = students_present.length;
+
+    // Process students in parallel using Promise.all
+    await Promise.all(students_present.map(async (userId) => {
+      const student = await User.findById(userId);
+      
+      if (!student) {
+        throw new Error(`Student with ID ${userId} not found`);
+      }
+
+      // Ensure Attended is initialized as a number
+      student.Attended = (typeof student.Attended === 'number' ? student.Attended : 0) + 1;
+      await student.save();
+    }));
+
+    // Create new class record
+    const newClass = await Class.create({
+      subjectName: 'Abc',
+      totalPresent,
+      date: Date.now(),
+      students_present
+    });
+
+    res.status(200).json({ 
+      message: "Attendance marked successfully",
+      classDetails: {
+        id: newClass._id,
+        totalPresent,
+        date: newClass.date
+      }
+    });
+
+  } catch (error) {
+    console.error('Error marking attendance:', error);
+    
+    // Send appropriate error response based on error type
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ message: error.message });
+    }
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation Error', 
+        details: error.message 
+      });
+    }
+
+    res.status(500).json({ 
+      message: 'Internal Server Error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
