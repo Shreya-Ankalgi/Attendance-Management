@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
     Attended:{type:Number},    
+   
+    NoOfClassesTaken: {
+      type:Number,
+      default:0
+    },
   },
   { timestamps: true }
 );

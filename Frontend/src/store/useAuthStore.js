@@ -172,6 +172,11 @@ export const useAuthStore = create((set, get) => ({
       throw error;
     }
   },
+  markAttendance:async(presentStudents)=>{
+    const res = await axiosInstance.post("/auth/markattendance",presentStudents);
+    console.log(res);
+    
+  },
 
   // Socket Disconnect (Existing)
   disconnectSocket: () => {
