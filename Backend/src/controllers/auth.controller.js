@@ -249,7 +249,7 @@ export const markAttendance = async (req, res) => {
 
     // Create new class record
     const newClass = await Class.create({
-      subjectName: subject,
+      subjectName: 'FAFL',
       totalPresent,
       date: Date.now(),
       students_present

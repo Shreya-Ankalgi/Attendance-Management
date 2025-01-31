@@ -18,7 +18,7 @@ const ClientAttendance = () => {
 
 
 
-    const { employees, fetchEmployees, markAttendance } = useAuthStore();
+    const { employees, fetchEmployees, markAttendance,checkAuth } = useAuthStore();
 
     const getUsers = async () => {
         await fetchEmployees();
@@ -78,6 +78,7 @@ const ClientAttendance = () => {
         const presentCount = presentStudents.length;
         const totalCount = students.length;
         markAttendance(presentStudents,subjectSelected);
+        checkAuth();
         showToastAndDisableScan(`Class ended. ${presentCount}/${totalCount} students present`);
         setPresentStudents([]);
         setIsModalOpen(false);
@@ -103,14 +104,7 @@ const ClientAttendance = () => {
             </div>
             <div className="flex">
                
-                <select name="Subject" id="" className="px-2 py-2 mb-3" 
-                 value={subjectSelected}
-                 onChange={(e)=>setSubjectSelected(e.target.value)}
-                >
-                    <option value="" disabled>Choose subject</option>
-                    <option value="FAFL">FAFL</option>
-                    <option value="MCES">MCES</option>
-                </select>   
+              
             </div>
 
             <div className="border border-primary/50 p-4 rounded-lg backdrop-blur-md bg-base-200/50 shadow-lg">
